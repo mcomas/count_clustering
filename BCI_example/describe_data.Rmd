@@ -1,0 +1,177 @@
+---
+title: "Describe data"
+author: "Marc Comas-Cufí"
+date: "7/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+library(vegan)
+library(coda.count)
+library(coda.base)
+library(ggtern)
+ellipse = function(mu, sigma, p){
+  mu = as.vector(mu)
+  s = -2 * log(1 - p);
+  ev = eigen(sigma * s)
+  t_ = seq(0, 2 * pi, length.out = 500)
+  a = mu + t(t(ev$vectors) * sqrt(ev$values)) %*% rbind(cos(t_), sin(t_)) 
+  as.data.frame(t(a))
+}
+coda_ellipse = function(mu, sigma, p, B = ilr_basis(length(mu) + 1)){
+  composition(ellipse(mu, sigma, p), B)
+}
+theme_set(theme_minimal() +
+  theme(tern.axis.arrow.show = T,
+        tern.axis.title.show = F,
+        tern.axis.arrow.text = element_text(face = 'bold')))
+```
+
+`BCI` is a dataset containing counts of trees in Barro Colorado Island. Data come from `vegan` package.
+
+```{r, results='asis'}
+data(BCI)
+cat(paste(names(BCI), collapse=', '))
+```
+
+For this purpose we only select three kinds of trees at random, we only require each row cotains at least one count in the final data
+
+```{r}
+set.seed(4)
+X = matrix(0, ncol = 3, nrow = 50)
+while(min(rowSums(X)) == 0){
+  IND = sample(1:ncol(BCI), 3)
+  X = BCI[,IND]
+}
+head(X)
+```
+
+We rename the columns as `x1`, `x2` and `x3`:
+
+```{r}
+colnames(X) = c('x1', 'x2', 'x3')
+```
+
+Let's take a look to our sample:
+
+```{r}
+ggtern() +
+  geom_point(data = X, aes(x = x1, y = x2, z = x3))
+```
+
+```{r}
+B = alr_basis(3)
+fit = fit_lrnm(X, probs = TRUE, B)
+mu = as.vector(fit$mu)
+sigma = fit$sigma
+ellip = coda_ellipse(mu = fit$mu, sigma = fit$sigma, p = 0.95, B)
+H_ellip = ellipse(mu = fit$mu, sigma = fit$sigma, p = 0.95)
+E = as.data.frame(fit$P)
+H_E = coordinates(E, B)
+
+lM = lrnm_posterior_approx(as.matrix(X), mu, sigma, B)
+H_MAX = as.data.frame(t(sapply(lM, function(l)l$mu)))
+MAX = composition(H_MAX, B)
+```
+
+```{r}
+ggtern() +
+  geom_point(data = X, aes(x = x1, y = x2, z = x3)) +
+  geom_point(data = E, aes(x = x1, y = x2, z = x3), col = 'blue') +
+  geom_path(data=ellip, aes(x = x1, y = x2, z = x3), col = 'red')
+```
+
+In coordinates with respect basi `B`:
+
+```{r}
+p = ggplot() +
+  #geom_point(data = X, aes(x = x1, y = x2, z = x3)) +
+  geom_point(data = H_E, aes(x = x1, y = x2), col = 'blue', alpha = 0.2) +
+  #geom_point(data = MAX, aes(x = x1, y = x2, z = x3), col = 'orange') +
+  geom_path(data=H_ellip, aes(x = V1, y = V2), col = 'red')
+p  +
+  geom_text(data = H_E, aes(x = x1, y = x2, label = seq_along(x1)))
+```
+
+```{r}
+Bhattacharyya = function(N1, N2){
+  SIGMA = (N1$sigma + N2$sigma) / 2
+  invSIGMA = solve( SIGMA )
+  d = 1/8 * t(N1$mu - N2$mu) %*% invSIGMA %*% (N1$mu - N2$mu) +
+    1/2 * log( det(SIGMA) / sqrt(det(N1$sigma)*det(N2$sigma)) )
+  d[1]
+}
+```
+
+```{r, fig.width=6, fig.height=5.7}
+I = 20
+J_distances = sapply(1:nrow(X), function(J_) Bhattacharyya(lM[[I]], lM[[J_]]))
+J = which.max(J_distances)
+I_ellip = ellipse(lM[[I]]$mu, lM[[I]]$sigma, 0.95)
+J_ellip = ellipse(lM[[J]]$mu, lM[[J]]$sigma, 0.95)
+p + 
+  geom_text(data = H_E, aes(x = x1, y = x2, label = seq_along(x1)), alpha = 0.5, size = 4) +
+  geom_point(data = H_E[I,,drop=F], aes(x = x1, y = x2), col = 'blue') +
+  geom_path(data=I_ellip, aes(x = V1, y = V2), col = 'blue') +
+  geom_point(data = H_E[J,,drop=F], aes(x = x1, y = x2), col = 'orange') +
+  geom_path(data=J_ellip, aes(x = V1, y = V2), col = 'orange') +
+  labs(title = 'Distance between count samples',
+       subtitle = sprintf("Bhattacharyya distance: %.4f", Bhattacharyya(lM[[I]], lM[[J]]))) +
+  coord_equal()
+```
+
+We can define a distance between multivariate count data using Bhattacharyya distance on the Laplace approximation of the posterior distribution of a log-ratio-normal-multinomial distribution.
+
+```{r}
+dist_lrnm = function(X){
+  N = nrow(X)
+  D = matrix(0, nrow = N, ncol = N)
+  for(i in 1:N){
+    for(j in 1:N){
+      D[i,j] = Bhattacharyya(lM[[i]], lM[[j]])
+    }
+  }
+  as.dist(D)
+}
+D = dist_lrnm(X)
+hc = hclust(D, method = 'complete')
+plot(hc)
+clusters = cutree(hc, k = 4)
+```
+
+```{r}
+df = as.data.frame(X)
+df$cl = sprintf("Cl.%d", clusters)
+ggtern() +
+  geom_text(data = df, aes(x = x1, y = x2, z = x3, label = seq_along(x1)), alpha = 0.25) +
+  geom_point(data = df, aes(x = x1, y = x2, z = x3, col = cl))
+```
+
+If we take a closer look at observation 17.
+
+```{r}
+X[17,]
+```
+
+we can observe that this observation has a very small amount of counts, therefore, they behaviour is likeliky to be similar to the original gaussian modelling distribution (similar location and variability as the ones observed in the overall sample).
+
+```{r}
+I_ellip = ellipse(lM[[17]]$mu, lM[[17]]$sigma, 0.95)
+p + 
+  geom_text(data = H_E, aes(x = x1, y = x2, label = seq_along(x1)), alpha = 0.5, size = 4) +
+  geom_point(data = H_E[17,,drop=F], aes(x = x1, y = x2), col = 'blue') +
+  geom_path(data=I_ellip, aes(x = V1, y = V2), col = 'blue') +
+  coord_equal()
+```
+
+```{r}
+data(BCI.env)
+ggplot() +
+  geom_point(data=BCI.env, aes(x=UTM.EW, y=UTM.NS, col=factor(clusters)), size=6)
+```
+
+```{r}
+lapply(split(BCI.env, clusters), summary)
+```
+

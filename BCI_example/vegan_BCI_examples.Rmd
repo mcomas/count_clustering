@@ -1,0 +1,72 @@
+---
+title: '`vegan` example'
+author: "Marc Comas-Cufí"
+date: "7/7/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Import an example count dataset
+data(BCI)
+# Test the base functionality
+mean.avg.dist <- avgdist(BCI, sample = 50, iterations = 10)
+# Test the transformation function
+mean.avg.dist.t <- avgdist(BCI, sample = 50, iterations = 10, transf = sqrt)
+# Test the median functionality
+median.avg.dist <- avgdist(BCI, sample = 50, iterations = 10, meanfun = median)
+# Print the resulting tables
+head(as.matrix(mean.avg.dist))
+head(as.matrix(mean.avg.dist.t))
+head(as.matrix(median.avg.dist))
+# Run example to illustrate low variance of mean, median, and stdev results
+# Mean and median std dev are around 0.05
+sdd <- avgdist(BCI, sample = 50, iterations = 100, meanfun = sd)
+summary(mean.avg.dist)
+summary(median.avg.dist)
+summary(sdd)
+
+# Test for when subsampling depth excludes some samples
+# Return samples that are removed for not meeting depth filter
+depth.avg.dist <- avgdist(BCI, sample = 450, iterations = 10)
+# Print the result
+depth.avg.dist
+```
+
+
+```{r}
+par <- par(mfrow=c(2,2))
+plot(contribdiv(BCI, "richness"), main = "Absolute")
+plot(contribdiv(BCI, "richness", relative = TRUE), main = "Relative")
+plot(contribdiv(BCI, "simpson"))
+plot(contribdiv(BCI, "simpson", relative = TRUE))
+par(opar)
+```
+
+`diversity`
+
+```{r}
+data(BCI)
+H <- diversity(BCI)
+simp <- diversity(BCI, "simpson")
+invsimp <- diversity(BCI, "inv")
+## Unbiased Simpson (Hurlbert 1971, eq. 5) with rarefy:
+unbias.simp <- rarefy(BCI, 2) - 1
+## Fisher alpha
+alpha <- fisher.alpha(BCI)
+## Plot all
+pairs(cbind(H, simp, invsimp, unbias.simp, alpha), pch="+", col="blue")
+## Species richness (S) and Pielou's evenness (J):
+S <- specnumber(BCI) ## rowSums(BCI > 0) does the same...
+J <- H/log(S)
+## beta diversity defined as gamma/alpha - 1:
+data(dune)
+data(dune.env)
+alpha <- with(dune.env, tapply(specnumber(dune), Management, mean))
+gamma <- with(dune.env, specnumber(dune, Management))
+gamma/alpha - 1
+```
+
