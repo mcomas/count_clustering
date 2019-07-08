@@ -1,5 +1,5 @@
 ---
-title: "Describe data"
+title: "Clustering multivariate count data using the log-ratio-normal-multinomial distribution"
 author: "Marc Comas-Cufí"
 date: "7/6/2019"
 output: html_document
@@ -7,9 +7,13 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
-library(vegan)
-library(coda.count)
+```
+
+Loading required packages and defining some functions:
+
+```{r, message=FALSE, warning=FALSE}
 library(coda.base)
+library(coda.count)
 library(ggtern)
 ellipse = function(mu, sigma, p){
   mu = as.vector(mu)
@@ -28,71 +32,124 @@ theme_set(theme_minimal() +
         tern.axis.arrow.text = element_text(face = 'bold')))
 ```
 
+# Introducing the dataset
+
 `BCI` is a dataset containing counts of trees in Barro Colorado Island. Data come from `vegan` package.
 
 ```{r, results='asis'}
-data(BCI)
-cat(paste(names(BCI), collapse=', '))
+data(BCI, package = 'vegan')
+cat("__Variables:__", paste(names(BCI), collapse=', '))
 ```
 
-For this purpose we only select three kinds of trees at random, we only require each row cotains at least one count in the final data
+To illustrate the methodology we consider three kind of trees selected at random. Our only requirement is that each row cotains at least one count in the final data:
 
 ```{r}
-set.seed(4)
+set.seed(1)
 X = matrix(0, ncol = 3, nrow = 50)
 while(min(rowSums(X)) == 0){
   IND = sample(1:ncol(BCI), 3)
   X = BCI[,IND]
 }
-head(X)
 ```
 
-We rename the columns as `x1`, `x2` and `x3`:
+In the following, we rename columns `r paste(colnames(X), collapse=', ')` as `x1`, `x2` and `x3` respectively:
 
 ```{r}
 colnames(X) = c('x1', 'x2', 'x3')
 ```
 
-Let's take a look to our sample:
+Let's take a look to our multivariate count sample:
+
+```{r}
+head(X)
+```
+
+As compositional data, observations can be shown in a ternary diagram (observations with zeros are shown in blue):
 
 ```{r}
 ggtern() +
-  geom_point(data = X, aes(x = x1, y = x2, z = x3))
+  geom_point(data = X, aes(x = x1, y = x2, z = x3, col = x1*x2*x3==0)) +
+  theme(legend.position = 'none')
 ```
 
+# Modeling the dataset using the log-ratio-normal-multinomial
+
+We will work in coordinates with respect the following basis:
+
 ```{r}
-B = alr_basis(3)
-fit = fit_lrnm(X, probs = TRUE, B)
+B = ilr_basis(3)
+B
+```
+
+First of all, a log-ratio-normal-multinomial distribution is adjusted to our dataset. Because the dimensionality of our dataset is small we fit the distribution using hermite integration. For higher dimensions it is recommended to use montecarlo integration.
+
+```{r}
+fit = fit_lrnm(X, probs = TRUE, B, method = 'hermite')
+fit_mc = fit_lrnm(X, probs = TRUE, B, method = 'montecarlo', 
+                  Z = randtoolbox::sobol(1000, 2, normal = TRUE), eps = 0.001)
+```
+
+The adjusted parameters are:
+
+```{r}
+fit[1:2]
 mu = as.vector(fit$mu)
 sigma = fit$sigma
-ellip = coda_ellipse(mu = fit$mu, sigma = fit$sigma, p = 0.95, B)
-H_ellip = ellipse(mu = fit$mu, sigma = fit$sigma, p = 0.95)
-E = as.data.frame(fit$P)
-H_E = coordinates(E, B)
-
-lM = lrnm_posterior_approx(as.matrix(X), mu, sigma, B)
-H_MAX = as.data.frame(t(sapply(lM, function(l)l$mu)))
-MAX = composition(H_MAX, B)
 ```
 
+We save the expected probabilities which are more likely to have generated our sample in variable `E`. We can plot the expected probabilities together with 
+
 ```{r}
+ellip = coda_ellipse(mu = fit$mu, sigma = fit$sigma, p = 0.95, B)
+E = as.data.frame(fit$P)
 ggtern() +
-  geom_point(data = X, aes(x = x1, y = x2, z = x3)) +
+  geom_point(data = X, aes(x = x1, y = x2, z = x3), col='orange') +
   geom_point(data = E, aes(x = x1, y = x2, z = x3), col = 'blue') +
   geom_path(data=ellip, aes(x = x1, y = x2, z = x3), col = 'red')
 ```
 
-In coordinates with respect basi `B`:
+Because the expected probabilities are compositional, we can show them in coordinates with respect basis `B`:
 
 ```{r}
+H_ellip = coordinates(ellip, B)
+H_E = coordinates(E, B)
 p = ggplot() +
-  #geom_point(data = X, aes(x = x1, y = x2, z = x3)) +
   geom_point(data = H_E, aes(x = x1, y = x2), col = 'blue', alpha = 0.2) +
-  #geom_point(data = MAX, aes(x = x1, y = x2, z = x3), col = 'orange') +
-  geom_path(data=H_ellip, aes(x = V1, y = V2), col = 'red')
+  geom_path(data=H_ellip, aes(x = x1, y = x2), col = 'red') +
+  coord_fixed()
 p  +
   geom_text(data = H_E, aes(x = x1, y = x2, label = seq_along(x1)))
 ```
+
+# Defining a distance between count data
+
+As shown in the previous ternary plot, each multivariate count observation $x$ (dots in orange) has an expected probability associated (dots in blue). This expected probability is distributed according to the join distribution of $(x,h)$, following a multinomial and gaussian distribution.
+
+We can use the Laplace method to approximate the posterior distirbution in each multivariate count. 
+
+```{r}
+lM = lrnm_posterior_approx(as.matrix(X), mu, sigma, B)
+```
+
+For example, in blue we can see the Laplace approximation for observation 47 or 26
+
+```{r, fig.width=6, fig.height=5.7, out.width="45%", fig.show='hold'}
+I = 47
+I_ellip = ellipse(lM[[I]]$mu, lM[[I]]$sigma, 0.95)
+p + 
+  geom_text(data = H_E, aes(x = x1, y = x2, label = seq_along(x1)), alpha = 0.5, size = 4) +
+  geom_point(data = H_E[I,,drop=F], aes(x = x1, y = x2), col = 'blue') +
+  geom_path(data=I_ellip, aes(x = V1, y = V2), col = 'blue')
+
+I = 26
+I_ellip = ellipse(lM[[I]]$mu, lM[[I]]$sigma, 0.95)
+p + 
+  geom_text(data = H_E, aes(x = x1, y = x2, label = seq_along(x1)), alpha = 0.5, size = 4) +
+  geom_point(data = H_E[I,,drop=F], aes(x = x1, y = x2), col = 'blue') +
+  geom_path(data=I_ellip, aes(x = V1, y = V2), col = 'blue')
+```
+
+To define a distance between multivariate count data we propose to use the Bhattacharyya distance between distributions.
 
 ```{r}
 Bhattacharyya = function(N1, N2){
@@ -103,6 +160,8 @@ Bhattacharyya = function(N1, N2){
   d[1]
 }
 ```
+
+For example, for observation 20 we can find the furthest observation as the one with highest Bhattacharyya distance between their approximation to the posterior distribution.
 
 ```{r, fig.width=6, fig.height=5.7}
 I = 20
@@ -121,9 +180,9 @@ p +
   coord_equal()
 ```
 
-We can define a distance between multivariate count data using Bhattacharyya distance on the Laplace approximation of the posterior distribution of a log-ratio-normal-multinomial distribution.
+With this distance we can build a distance matrix between multivariate count observations and apply classical methods as for example methods based on hierarchical clustering.
 
-```{r}
+```{r, fig.width=10, fig.height=4}
 dist_lrnm = function(X){
   N = nrow(X)
   D = matrix(0, nrow = N, ncol = N)
@@ -136,11 +195,13 @@ dist_lrnm = function(X){
 }
 D = dist_lrnm(X)
 hc = hclust(D, method = 'complete')
-plot(hc)
-clusters = cutree(hc, k = 4)
+plot(hc, xlab = 'Observations')
 ```
 
+Separating the tree in 4 parts, we can obtain the following 4 clusters:
+
 ```{r}
+clusters = cutree(hc, k = 4)
 df = as.data.frame(X)
 df$cl = sprintf("Cl.%d", clusters)
 ggtern() +
@@ -148,30 +209,5 @@ ggtern() +
   geom_point(data = df, aes(x = x1, y = x2, z = x3, col = cl))
 ```
 
-If we take a closer look at observation 17.
 
-```{r}
-X[17,]
-```
-
-we can observe that this observation has a very small amount of counts, therefore, they behaviour is likeliky to be similar to the original gaussian modelling distribution (similar location and variability as the ones observed in the overall sample).
-
-```{r}
-I_ellip = ellipse(lM[[17]]$mu, lM[[17]]$sigma, 0.95)
-p + 
-  geom_text(data = H_E, aes(x = x1, y = x2, label = seq_along(x1)), alpha = 0.5, size = 4) +
-  geom_point(data = H_E[17,,drop=F], aes(x = x1, y = x2), col = 'blue') +
-  geom_path(data=I_ellip, aes(x = V1, y = V2), col = 'blue') +
-  coord_equal()
-```
-
-```{r}
-data(BCI.env)
-ggplot() +
-  geom_point(data=BCI.env, aes(x=UTM.EW, y=UTM.NS, col=factor(clusters)), size=6)
-```
-
-```{r}
-lapply(split(BCI.env, clusters), summary)
-```
 
