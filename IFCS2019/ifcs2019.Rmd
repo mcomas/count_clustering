@@ -1,0 +1,59 @@
+---
+title: "A log-ratio approach to cluster analysis of count data when the total is irrelevant"
+subtitle: ""
+author: "Marc Comas-Cufí"
+institute: "Department of Computer Science, Applied Mathematics and Statistics"
+date: "(updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+class: top
+
+#### Multivariate count data: **Multinomial** vs **Multivariate Poisson**
+
+* Without variability in their parameters (with constant parameters).
+    * Parts of multivariate Poisson observations are independent. 
+    * Parts of multinomial observations are negatively correlated $\implies$ Tendency of negative bias $\implies$ interpretation about association of parts can not depend on $cov(X_i,X_j)$.
+    
+```{r}
+LAMBDA = c(2,2,4)
+cov(sapply(LAMBDA, rpois, n = 100000))
+
+PI = c(0.25,0.25,0.5)
+cor(coda.count::rmultinomial(n = 100000, size = 8, p = PI))
+```
+
+---
+
+#### Parametric approaches to cluster multivariate count data
+
+* __Ignoring compositional nature__. Consider data is real, i.e. $X \in \mathbb{R}^d$ and apply classical methods.
+* __Taking into account compositional nature, but ignoring the counting nature__. Compositional zero replacement methods and apply classical methods to compositional coordinates (logratio coordinates). (Martin-Fernandez _et al._, 2015)
+    * We have $a=b$ when $a = (1,1,2)$, $b=(1000,1000,2000)$. $a$ and $b$ at the same distance than $p=(\frac{1}{3},\frac{1}{3},\frac{1}{3})$.
+* __Taking into account compositional and counting nature__.
+    * Topic models. Mixture of multinomials where mixing proportions are modelled in the Simplex.
+        * Latent Dirichlet Allocation.  Dirichlet distribution. (Blei _et. al., 2003)
+        * Correlated Topic Models.  Log-ratio normal distribution. (Blei & Lafferty, 2007)
+    * Mixture of compounding distributions.
+        * Mixtures of Dirichlet-multinomial distributions. (Holmes _et al._, 2012)
+        * Mixtures of log-ratio-normal-multinomial distributions. (Comas-Cufí _et al._, 2017)
+
+---
+
+#### Combining different approaches to cluster count data
+
+1. Fit a Dirichlet-multinomial distribution to your data.
+    * A Dirichlet prior seems to be conservative in keeping the covariance structure observed in count data.
+1. Fit a mixture model to the posterior probabilities of the Dirichlet-multinomial distribution.
+1 
+
