@@ -6,11 +6,7 @@ load('pigs_example/Pigs.Posture.RData')
 X = Pigs
 B = ilr_basis(ncol(X))
 
-Z = randtoolbox::sobol(10000, 5, normal = TRUE)
-fit = fit_lrnm(X, method = 'montecarlo', Z = Z, eps = 0.001)
-
-fit[1:2]
-
+pars = fit_lrnm(X, B = B, method = 'hermite', hermite.order = 3, max_iter = 1000)
 
 
 Bhattacharyya = function(N1, N2){
@@ -32,11 +28,27 @@ dist_lrnm = function(X){
   as.dist(D)
 }
 
-lM = lrnm_posterior_approx(as.matrix(X), fit$mu, fit$sigma, B)
+
+M = replicate(1000, {
+  M = t(apply(as.matrix(X), 1, function(x) c_rlrnm_posterior(1, x, pars$mu, pars$sigma, Binv = t(MASS::ginv(B)), r = 100)))
+  as.matrix(dist(M))
+})
+Mm = apply(M, 1:2, mean)
+hc1 = hclust(as.dist(Mm), method = 'ward.D2')
+
+lM = lrnm_posterior_approx(as.matrix(X), pars$mu, pars$sigma, B)
 D = dist_lrnm(X)
-hc = hclust(D, method = 'complete')
-plot(hc, xlab = 'Observations')
+hc2 = hclust(D, method = 'ward.D2')
+
+par(mfrow=c(1,2))
+plot(hc1, xlab = 'Observations', labels = dat.pos$Treatment)
+plot(hc2, xlab = 'Observations', labels = dat.pos$Treatment)
+par(mfrow=c(1,1))
+
 clusters = cutree(hc, 3)
+ggtern() +
+  geom_mask() +
+  geom_point(data = X, aes(x=BED, y = PASSAGE, z = FEEDER, col = dat.pos$Treatment))
 
 table(clusters, dat.pos$Treatment)
 
