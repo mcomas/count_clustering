@@ -17,6 +17,8 @@ fit = fit_dm(Y)
 Ynz = t(t(Y) + fit[,1])
 Ynz = Ynz/rowSums(Ynz)*rowSums(Y)
 
+Yzr = zCompositions::cmultRepl(Y)
+
 #B = pb_basis(Xnz, method = 'exact')
 B = pb_basis(Ynz, method = 'exact')
 rownames(B) = colnames(Ynz)
@@ -25,10 +27,16 @@ vs <-apply(coordinates(Ynz, B), 2, var)
 cumsum(vs) / sum(vs)
 B
 
+library(mclust)
 B2 = B[,1:2]
 B2
-H2 = coordinates(as.data.frame(Ynz), B2)
-m0 = Mclust(H2)
+Hnz = coordinates(as.data.frame(Ynz), B2)
+Hzr = coordinates(as.data.frame(Yzr), B2)
+m0nz = Mclust(Hnz)
+m0zr = Mclust(Hzr)
+
+m0 = m0zr
+H2 = Hzr
 C0 = m0$classification
 library(ggtern)
 ggtern() +
@@ -36,7 +44,7 @@ ggtern() +
   geom_point(data = as.data.frame(Y), aes(x=other, y=ind, z=esp, col=factor(C0))) +
   theme_minimal() + theme(legend.position = 'none')
 
-library(mclust)
+
 mA = Mclust(H2, modelNames = "VII")
 #m = Mclust(H2)
 summary(mA)
@@ -71,7 +79,7 @@ pt1
 
 
 set.seed(1)
-I = 413#1
+I = 60 #413#1
 H_s = c_rlrnm_mixture_posterior(200, Y[I,], PI, MU, SIGMA, B2, 1000) %>% as.data.frame()
 l_post = data_posterior(xseq = seq(min(H_s[,1]), max(H_s[,1]), length.out = 100),
                         yseq = seq(min(H_s[,2]), max(H_s[,2]), length.out = 100),
@@ -104,7 +112,7 @@ pt2
 
 library(fpc)
 set.seed(1)
-NSIM = 50
+NSIM = 10
 D = matrix(0, nrow=nrow(Y), ncol=nrow(Y)) 
 H = matrix(0, nrow=nrow(Y), ncol=ncol(Y)-1)
 C = matrix('', ncol=NSIM, nrow=nrow(Y))
