@@ -6,12 +6,14 @@ institute: "Department of Computer Science, Applied Mathematics and Statistics"
 date: "(updated: `r Sys.Date()`)"
 output:
   xaringan::moon_reader:
+    css: [default, metropolis, metropolis-fonts]
     lib_dir: libs
     nature:
       highlightStyle: github
       highlightLines: true
       countIncrementalSlides: false
 ---
+
 
 ```{r, include=FALSE}
 set.seed(1)
@@ -42,7 +44,7 @@ theme_set(theme_minimal() + theme(legend.position = 'none'))
 
 class: top
 
-#### Multivariate count data: **Multinomial** vs **Multivariate Poisson**
+# Multivariate count data: **Multinomial** vs **Multivariate Poisson**
 
 * Without variability in their parameters (with constant parameters).
     * Parts of __multivariate Poisson__ observations are independent. 

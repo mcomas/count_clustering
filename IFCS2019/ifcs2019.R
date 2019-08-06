@@ -60,24 +60,24 @@ SIGMA_nz = Mnz$parameters$variance$sigma
 
 
 gen_label_zr = function(){
-  Hs_zr = apply(Y, 1, function(x_) c_rlrnm_mixture_posterior(1, x_, PI_zr, MU_zr, SIGMA_zr, t(MASS::ginv(B2)), r = 100)) %>% 
+  Hs_zr = apply(Y, 1, function(x_) c_rlrnm_mixture_posterior(1, x_, PI_zr, MU_zr, SIGMA_zr, t(MASS::ginv(B2)), r = 10)) %>% 
     t() %>% as.data.table()
-  kmeansruns(Hs_zr, krange = 1:10)$cluster
+  kmeansruns(Hs_zr, krange = 1:5)$cluster
 }
 gen_label_nz = function(){
-  Hs_nz = apply(Y, 1, function(x_) c_rlrnm_mixture_posterior(1, x_, PI_nz, MU_nz, SIGMA_nz, t(MASS::ginv(B2)), r = 100)) %>% 
+  Hs_nz = apply(Y, 1, function(x_) c_rlrnm_mixture_posterior(1, x_, PI_nz, MU_nz, SIGMA_nz, t(MASS::ginv(B2)), r = 10)) %>% 
     t() %>% as.data.table()
-  kmeansruns(Hs_nz, krange = 1:10)$cluster
+  kmeansruns(Hs_nz, krange = 1:5)$cluster
 }
 C_zr = replicate(100, gen_label_zr())
 C_nz = replicate(100, gen_label_nz())
 
 Cx_zr = array(0, dim = c(nrow(Y), ncol(C_zr), 1, 1), dimnames = list(1:nrow(Y), 1:ncol(C_zr), 1, max(C_zr)))
 Cx_zr[,,1,1] = C_zr
-C_mv_zr = majority_voting(Cx_zr)
+C_mv_zr = majority_voting(Cx_zr, is.relabelled = FALSE)
 Cx_nz = array(0, dim = c(nrow(Y), ncol(C_nz), 1, 1), dimnames = list(1:nrow(Y), 1:ncol(C_nz), 1, max(C_nz)))
 Cx_nz[,,1,1] = C_nz
-C_mv_nz = majority_voting(Cx_nz)
+C_mv_nz = majority_voting(Cx_nz, is.relabelled = FALSE)
 
 save.image('IFCS2019/ifcs2019.RData')
 
