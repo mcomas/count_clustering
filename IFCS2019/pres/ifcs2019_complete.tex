@@ -1,0 +1,158 @@
+\documentclass[9pt,ignorenonframetext,compress]{beamer}
+\usepackage{ragged2e}
+\usepackage{etoolbox}
+\apptocmd{\frame}{}{\justifying}{} % Allow optional arguments after frame.
+\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{caption label separator}{: }
+\setbeamercolor{caption name}{fg=normal text.fg}
+\beamertemplatenavigationsymbolsempty
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{animate}
+\usepackage{fixltx2e} % provides \textsubscript
+\usepackage[makeroom]{cancel}
+\usepackage{tikz}
+
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+\usetheme{metropolis}
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\newif\ifbibliography
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight0.8\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+
+% Prevent slide breaks in the middle of a paragraph:
+\widowpenalties 1 10000
+\raggedbottom
+
+\AtBeginPart{
+  \let\insertpartnumber\relax
+  \let\partname\relax
+  \frame{\partpage}
+}
+\AtBeginSection{
+  \ifbibliography
+  \else
+    \let\insertsectionnumber\relax
+    \let\sectionname\relax
+    \frame{\sectionpage}
+  \fi
+}
+\AtBeginSubsection{
+  \let\insertsubsectionnumber\relax
+  \let\subsectionname\relax
+  \frame{\subsectionpage}
+}
+
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+\usepackage{xspace}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{bm}
+\usepackage{xcolor}
+
+\setbeamertemplate{caption}{\raggedright\insertcaption\par}
+
+\newcommand{\mm}[1]{\boldsymbol{#1}\xspace}
+\newcommand{\mvn}{\bm{\mathcal{N}}}
+\newcommand{\EA}[1]{\mathbb{E}_{\textbf{H} \,|\, \textbf{X};\, \mm\mu^{(s)}, \mm\Sigma^{(s)}}\left[#1\right]\xspace}
+\newcommand{\EAi}[1]{\mathbb{E}_{\textbf{H} \,|\, \mm x_i;\, \mm\mu^{(s)}, \mm\Sigma^{(s)}}\left[#1\right]\xspace}
+\newcommand\indep{\protect\mathpalette{\protect\independenT}{\perp}}
+\def\independenT#1#2{\mathrel{\rlap{$#1#2$}\mkern2mu{#1#2}}}
+
+
+%\lno{\includegraphics[height=0.8cm]{logo.eps}\vspace{10pt}} % max. 220pt
+
+%\thispagestyle{empty}
+
+\title{A log-ratio approach to cluster analysis of count data when the total is irrelevant}
+\date{}
+\author{%
+  \texorpdfstring{
+    \begin{columns}%[onlytextwidth]
+      \column{.35\linewidth}
+      \centering
+      \textbf{M. Comas-Cufí\inst{1}}\\
+      \href{mailto:marc.comas@udg.edu}{marc.comas@udg.edu}\\ \vspace{0.5cm}
+      \
+      G. Mateu-Figueras\inst{1}\\
+      \href{mailto:gloria.mateu@udg.edu}{gloria.mateu@udg.edu}\\
+      \column{.35\linewidth}
+      \centering
+      J.A. Martín-Fernández\inst{1}\\
+      \href{mailto:josepantoni.martin@udg.edu}{josepantoni.martin@udg.edu}\\   \vspace{0.5cm}
+      J. Palarea-Albaladejo\inst{2}\\
+      \href{mailto:javier.palarea@bioss.ac.uk}{javier.palarea@bioss.ac.uk}      
+    \end{columns}
+  }
+  {}
+}
+
+\institute[shortinst]{\vspace{0.25cm}
+\inst{1} Department of Computer Science, Applied Mathematics and Statistics, Universitat de Girona, Girona \\
+\includegraphics[height=0.9cm]{imae.png}
+\and %
+\inst{2} Biomathematics and Statistics Scotland, Edinburgh\\
+\includegraphics[height=1cm]{bioss.png}}
+
+
+\usetikzlibrary{shapes,decorations,arrows,calc,arrows.meta,fit,positioning}
+\tikzset{
+    -Latex,auto,node distance =1 cm and 1 cm,semithick,
+    state/.style ={ellipse, draw, minimum width = 0.7 cm},
+    point/.style = {circle, draw, inner sep=0.04cm,fill,node contents={}},
+    bidirected/.style={Latex-Latex,dashed},
+    el/.style = {inner sep=2pt, align=left, sloped}
+}
+
+
+\metroset{block=fill}
+
+\setbeamercolor{block title alerted}{use=alerted text,
+    fg=alerted text.fg,
+    bg=alerted text.bg!80!alerted text.fg}
+\setbeamercolor{block body alerted}{use={block title alerted, alerted text},
+    fg=alerted text.fg,
+    bg=block title alerted.bg!50!alerted text.bg}
+\setbeamercolor{block title example}{use=example text,
+    fg=example text.fg,
+    bg=example text.bg!80!example text.fg}
+\setbeamercolor{block body example}{use={block title example, example text},
+    fg=example text.fg,
+    bg=block title example.bg!50!example text.bg}
+    
+\begin{document}
+\begin{frame}[noframenumbering]
+\thispagestyle{empty}
+\titlepage
+\end{frame}
+
+
+
+
+\end{document}
