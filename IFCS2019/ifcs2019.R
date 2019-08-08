@@ -43,8 +43,8 @@ BASIS %>%
   flextable() %>%
   colformat_int(col_keys = colnames(Y))
 
-Mzr = Mclust(Hzr, G = 10, modelNames = "EVV")
-Mnz = Mclust(Hnz, G = 10, modelNames = "EVV")
+Mzr = Mclust(Hzr, G = 2:20, modelNames = "EII")
+Mnz = Mclust(Hnz, G = 2:20, modelNames = "EII")
 Lzr = data_mixture(xseq = seq(-2,4, length.out = 100), yseq = seq(0, 4.5, length.out = 100), Mzr) %>%
   lapply(as.data.table)
 Lnz = data_mixture(xseq = seq(-2,4, length.out = 100), yseq = seq(0, 4.5, length.out = 100), Mnz) %>%

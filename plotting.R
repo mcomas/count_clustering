@@ -12,7 +12,7 @@ coda_ellipse = function(mu, sigma, p, B = ilr_basis(length(mu) + 1)){
 # x = X[1,]
 # xseq = seq(-1, 5, length.out = 100)
 # yseq = seq(-1, 3, length.out = 100)
-data_posterior = function(xseq, yseq, x, pi, mu, sigma, B){
+data_posterior = function(xseq, yseq, x, pi, mu, sigma, B, NL = 10){
   #p0 = sum(sapply(seq_along(pi), function(i) pi[i] * dlrnm(x, mu[,i], sigma[,,i], B)))
   gH = expand.grid(h1 = xseq, h2 = yseq)
   
@@ -21,7 +21,7 @@ data_posterior = function(xseq, yseq, x, pi, mu, sigma, B){
   m0 = max(gHmixt)
   gHmixt = gHmixt - m0
   d = rowSums(sapply(seq_along(pi), function(i) pi[i] * exp(gHmixt[,i])))
-  cL = contourLines(xseq, yseq, matrix(d, nrow = length(xseq), ncol = length(yseq)))
+  cL = contourLines(xseq, yseq, matrix(d, nrow = length(xseq), ncol = length(yseq)), nlevels = NL)
   cL
 }
 

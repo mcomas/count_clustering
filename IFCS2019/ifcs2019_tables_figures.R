@@ -4,6 +4,7 @@ library(ggplot2)
 library(ggtern)
 library(coda.base)
 library(coda.count)
+library(data.table)
 load('IFCS2019/ifcs2019.RData')
 set.seed(1)
 options(kableExtra.latex.load_packages = FALSE)
@@ -97,6 +98,15 @@ ggsave(p2_nz %>% COORD_LABS(), file = 'IFCS2019/pres/coordinates_nz.pdf', width 
 
 p2_zr = ggplot() +
   geom_point(data = Hzr, aes(ilr1, ilr2)) +
+  geom_point(data = Hzr[n0], aes(ilr1, ilr2), col = 'red') +
+  geom_point(data = Hzr[n1], aes(ilr1, ilr2), col = 'orange') +
+  geom_point(data = Hzr[n2], aes(ilr1, ilr2), col = 'yellow') +
+  labs(title = 'Coordinates', subtitle = ZR_LAB) +
+  coord_fixed(xlim = XLIM, ylim = YLIM)
+
+
+p2_zr = ggplot() +
+  geom_point(data = Hzr, aes(ilr1, ilr2)) +
   labs(title = 'Coordinates', subtitle = ZR_LAB) +
   coord_fixed(xlim = XLIM, ylim = YLIM)
 #####
@@ -153,25 +163,25 @@ ggsave(p1_zr%>% COORD_LABS(), file = 'IFCS2019/pres/model_zr.pdf', width = 7, he
 ggsave(p1_nz%>% COORD_LABS(), file = 'IFCS2019/pres/model_nz.pdf', width = 7, height = 5.5)
 
 
-print_posterior = function(I){
+print_posterior = function(I, LO = 100, NL = 10){
   set.seed(1)
   #########
   PI_zr = Mzr$parameters$pro
   MU_zr = Mzr$parameters$mean
   SIGMA_zr = Mzr$parameters$variance$sigma
-  H_zr_s = c_rlrnm_mixture_posterior(500, Y[I,], PI_zr, MU_zr, SIGMA_zr, B2, 1000) %>% as.data.frame()
-  l_post_zr = data_posterior(xseq = seq(min(H_zr_s[,1]), max(H_zr_s[,1]), length.out = 100),
-                             yseq = seq(min(H_zr_s[,2]), max(H_zr_s[,2]), length.out = 100),
-                             Y[I,], PI_zr, MU_zr, SIGMA_zr, B2) %>%
+  H_zr_s = c_rlrnm_mixture_posterior(1000, Y[I,], PI_zr, MU_zr, SIGMA_zr, B2, 1000) %>% as.data.frame()
+  l_post_zr = data_posterior(xseq = seq(min(H_zr_s[,1]), max(H_zr_s[,1]), length.out = LO),
+                             yseq = seq(min(H_zr_s[,2]), max(H_zr_s[,2]), length.out = LO),
+                             Y[I,], PI_zr, MU_zr, SIGMA_zr, B2, NL) %>%
     lapply(as.data.table)
   ########
   PI_nz = Mnz$parameters$pro
   MU_nz = Mnz$parameters$mean
   SIGMA_nz = Mnz$parameters$variance$sigma
-  H_nz_s = c_rlrnm_mixture_posterior(500, Y[I,], PI_nz, MU_nz, SIGMA_nz, B2, 1000) %>% as.data.frame()
-  l_post_nz = data_posterior(xseq = seq(min(H_nz_s[,1]), max(H_nz_s[,1]), length.out = 100),
-                             yseq = seq(min(H_nz_s[,2]), max(H_nz_s[,2]), length.out = 100),
-                             Y[I,], PI_nz, MU_nz, SIGMA_nz, B2) %>%
+  H_nz_s = c_rlrnm_mixture_posterior(1000, Y[I,], PI_nz, MU_nz, SIGMA_nz, B2, 1000) %>% as.data.frame()
+  l_post_nz = data_posterior(xseq = seq(min(H_nz_s[,1]), max(H_nz_s[,1]), length.out = LO),
+                             yseq = seq(min(H_nz_s[,2]), max(H_nz_s[,2]), length.out = LO),
+                             Y[I,], PI_nz, MU_nz, SIGMA_nz, B2, NL) %>%
     lapply(as.data.table)
   p2_zr = p1_zr
   for(post in l_post_zr){
@@ -204,8 +214,9 @@ P = print_posterior(I)
 ggsave(P$zr%>% COORD_LABS(), file = sprintf('IFCS2019/pres/posterior_zr_%d.pdf', I), width = 7, height = 5.5)
 ggsave(P$nz%>% COORD_LABS(), file = sprintf('IFCS2019/pres/posterior_nz_%d.pdf', I), width = 7, height = 5.5)
 
-I = 66
+I = 331
 P = print_posterior(I)
+P$zr
 ggsave(P$zr%>% COORD_LABS(), file = sprintf('IFCS2019/pres/posterior_zr_%d.pdf', I), width = 7, height = 5.5)
 ggsave(P$nz%>% COORD_LABS(), file = sprintf('IFCS2019/pres/posterior_nz_%d.pdf', I), width = 7, height = 5.5)
 
@@ -276,6 +287,8 @@ for(SEED in 1:5){
   ggsave(P$zr_cl%>% COORD_LABS(), file = sprintf('IFCS2019/pres/sample_cl_zr_%d.pdf', SEED), width = 7, height = 5.5)
   ggsave(P$nz_cl%>% COORD_LABS(), file = sprintf('IFCS2019/pres/sample_cl_nz_%d.pdf', SEED), width = 7, height = 5.5)
 }
+
+C_mv_nz = 3 - C_mv_nz
 
 p1_zr = ggplot() +
   geom_point(data = Hzr, aes(ilr1, ilr2, col = factor(C_mv_zr)), alpha=0.8)

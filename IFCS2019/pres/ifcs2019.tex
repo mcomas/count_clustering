@@ -130,7 +130,7 @@ Barcelona & 326376 & 100806 & 80529 & 85841 & 155361 & 87774 \\
 \end{tabular}
 \end{table}
 \item \textbf{Assumption 1:} The relative information is relevant, the total is not.  
-\item \textbf{Assumption 2:} The probability of a part different of zero is not zero. Zeros due to sampling limitations.
+\item \textbf{Assumption 2:} The probability of a part different of zero is not zero. Count zeros due to sampling limitations.
 
 \end{itemize}
 
@@ -138,9 +138,12 @@ Barcelona & 326376 & 100806 & 80529 & 85841 & 155361 & 87774 \\
 
 \begin{frame}{Parametric approaches to cluster compositional count data set (1)}
 
+Two sources of variability are considered: 
+\begin{center}Count (observations) $\;\;\;\;\;$ Compositional (probabilities)\end{center}
+
 \begin{itemize}
-\item \textbf{{\color{red}Compositional} and {\color{red}count} variability not taken into account}.\vspace{0.5cm}
-\item \textbf{{\color{green}Count} variability taken into account, but not {\color{red}compositional} variability}. Mixtures of multinomial distributions.\vspace{0.5cm}
+\item \textbf{{\color{red}Compositional} and {\color{red}count} variability not taken into account}. Classical methods applied to observed counts (p.e. Gaussian mixtures with the counts). \vspace{0.3cm}
+\item \textbf{{\color{green}Count} variability taken into account, but not {\color{red}compositional} variability}. Mixtures of multinomial distributions.\vspace{0.3cm}
 \item \textbf{{\color{green}Compositional} variability taken into account, but not {\color{red}count} variability}. Zero multiplicative replacement methods.
 \begin{itemize}
 \item Dirichlet prior  (Martín-Fernández \textit{et al.}, 2015)
@@ -172,8 +175,8 @@ Barcelona & 326376 & 100806 & 80529 & 85841 & 155361 & 87774 \\
 \pause
 \begin{alertblock}{Main limitations}
 \begin{itemize}
-\item Dirichlet-based approaches have  \textbf{modelling issues}.
-\item Gaussian-based approaches have  \textbf{estimation issues}.
+\item Dirichlet-based approaches have  \textbf{modelling difficulties}.
+\item Gaussian-based approaches have  \textbf{estimation difficulties}.
 \end{itemize}
 \end{alertblock}
 
@@ -186,8 +189,8 @@ Barcelona & 326376 & 100806 & 80529 & 85841 & 155361 & 87774 \\
 \begin{enumerate}
 \item \textbf{Dealing with zeros}. 
 \begin{itemize}
-\item Expected values of a Dirichlet-multinomial (DM) distribution seems to be conservative in keeping the covariance structure observed in the original count data set. The regression toward the mean is moderate.
-\item Zero replacement is even more conservative in keeping covariance structure observed in the count data set. But counts with small parts tend to define clusters by themselves.
+\item Dirichlet-multinomial (DM) distribution: conservative in keeping the covariance structure observed in the original count data set. The regression toward the mean is moderate.
+\item Zero replacement: conservative in keeping covariance structure observed in the count data set. Counts with small parts tend to define clusters by themselves.
 \end{itemize}
 \item \textbf{Compositional variability}. Model your data using a generic distribution defined on the Simplex. Gaussian mixtures  are easy to estimate.
 \item \textbf{Count variability}. Create $B$ new samples using the posterior distribution, and find clusters using classical methods on its log-ratio coordinates.
@@ -227,7 +230,7 @@ Barcelona & 326376 & 100806 & 80529 & 85841 & 155361 & 87774 \\
 \begin{column}{0.5\textwidth}
 \begin{itemize}
 \item Most municipalities lie between \textbf{ind} and \textbf{esp} parties.
-\item Some municipalities have some zero (see ${\color{RED}\bullet}$).
+\item Some municipalities have some count zero (${\color{RED}\bullet}$).
 \item<2>[$\rightarrow$] \textbf{We will deal with zeros first.}
 \end{itemize}
 \end{column}
@@ -315,7 +318,7 @@ Here, we consider two different approaches: \begin{itemize}\item Geometric Bayes
 \end{columns}
 
 \vspace{-0.26cm}
-\only<1-2>{\begin{exampleblock}{Modelling using Gaussian mixtures}\vspace{0.1cm}Find a distribution to model the original sample. Mixtures of Gaussian distribution are a good option (Nguyen \& McLachlan, 2018)\begin{itemize}\item[$\rightarrow$] We estimate a mixture of \emph{ten} Gaussian distributions with equal volume.\end{itemize}\end{exampleblock}}
+\only<1-2>{\begin{exampleblock}{Modelling using Gaussian mixtures}\vspace{0.1cm}Find a distribution to model the original sample. Mixtures of Gaussian distribution are a good option (Nguyen \& McLachlan, 2018).\begin{itemize}\item[$\rightarrow$] According to BIC criterion, a mixture of 7 and 5 spherical Gaussian distributions with equal volume were respectively used.\end{itemize}\end{exampleblock}}
 
 \end{frame}
 
@@ -328,7 +331,7 @@ Here, we consider two different approaches: \begin{itemize}\item Geometric Bayes
 \begin{figure}\vspace{-0.20cm}
 \only<1>{\includegraphics[trim=0cm 0cm 0cm 0cm,width=\textwidth]{model_zr.pdf}}%
 \only<2>{\includegraphics[trim=0cm 0cm 0cm 0cm,width=\textwidth]{posterior_zr_60.pdf}}%
-\only<3>{\includegraphics[trim=0cm 0cm 0cm 0cm,width=\textwidth]{posterior_zr_66.pdf}}%
+\only<3>{\includegraphics[trim=0cm 0cm 0cm 0cm,width=\textwidth]{posterior_zr_331.pdf}}%
 \only<4>{\includegraphics[trim=0cm 0cm 0cm 0cm,width=\textwidth]{posterior_zr_90.pdf}}%
 \end{figure}
 \end{column}
@@ -336,7 +339,7 @@ Here, we consider two different approaches: \begin{itemize}\item Geometric Bayes
 \begin{figure}\vspace{-0.20cm}
 \only<1>{\includegraphics[trim=0cm 0cm 0cm 0cm,width=\textwidth]{model_nz.pdf}}%
 \only<2>{\includegraphics[trim=0cm 0cm 0cm 0cm,width=\textwidth]{posterior_nz_60.pdf}}%
-\only<3>{\includegraphics[trim=0cm 0cm 0cm 0cm,width=\textwidth]{posterior_nz_66.pdf}}%
+\only<3>{\includegraphics[trim=0cm 0cm 0cm 0cm,width=\textwidth]{posterior_nz_331.pdf}}%
 \only<4>{\includegraphics[trim=0cm 0cm 0cm 0cm,width=\textwidth]{posterior_nz_90.pdf}}%
 \end{figure}
 \end{column}
@@ -346,10 +349,10 @@ Here, we consider two different approaches: \begin{itemize}\item Geometric Bayes
 \begin{exampleblock}{Sampling from the posterior distribution}
 For each count observation $\textbf{x}_i$, we sample from the posterior distribution $P(\textbf{h} \mid \textbf{x}_i; f)$, where $f$ is the mixture of Gaussian distributions.
 \begin{itemize}
-\item Metropolis–Hastings using $g(\textbf{h}) = f(\textbf{h})\cdot\text{Mult}(\textbf{x}_i; \textbf{ilr}_\mathcal{B}^{-1}(\textbf{h}))$, and proposal step using the Laplace approximation of $P(\textbf{h} \mid \textbf{x}_i; f)$ centred at zero.
+\item Metropolis–Hastings using $g(\textbf{h}) = f(\textbf{h})\cdot\text{Mult}(\textbf{x}_i; \textbf{ilr}_\mathcal{B}^{-1}(\textbf{h}))$ with proposal step defined by the Laplace approximation of $P(\textbf{h} \mid \textbf{x}_i; f)$ centred at zero.
 \uncover<2->{
 \only<1-2>{\item{$i=\text{``Argelaguer''},\; \textbf{x}_i=(\text{ind: } 259, \text{esp: } 19, \text{other: } 14)$}}%
-\only<3>{\item{$i=\text{``Arres''},\; \textbf{x}_i=(\text{ind: } 10, \text{esp: } 28, \text{other: } 0)$}}%
+\only<3>{\item{$i=\text{``Gisclareny''},\; \textbf{x}_i=(\text{ind: } 1, \text{esp: } 21, \text{other: } 1)$}}%
 \only<4>{\item{$i=\text{``Barcelona''},\; \textbf{x}_i=(\text{ind: } 429\,782, \text{esp: } 405\,924, \text{other: } 96\,748)$}}%
 }
 \end{itemize}
@@ -405,7 +408,7 @@ For each count observation $\textbf{x}_i$, we sample from the posterior distribu
 \begin{itemize}
 \item Consensus clustering can be applied to summarise all B clusterings. 
 \begin{itemize}\item[$\rightarrow$] Majority voting (Dudoit and Fridlyand, 2003)).\end{itemize}
-\item<4> Only \emph{six} municipalities differ in the final clustering.
+\item<4> Only \emph{four} municipalities differ in the final clustering.
 \end{itemize}
 
 \begin{columns}
